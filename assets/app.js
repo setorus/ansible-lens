@@ -1,7 +1,7 @@
 /* Ansible Lens UI. Talks to assets/worker.js, which runs lens/*.py in Pyodide. */
 (() => {
   "use strict";
-  const VERSION = "1.1.0";
+  const VERSION = "1.0.0";
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const TEXT_EXT = /\.(ya?ml|j2|jinja2?|json|ini|cfg|txt|conf|sh|py|toml|md|tpl|template)$/i;

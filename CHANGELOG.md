@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1](https://github.com/setorus/ansible-lens/compare/v1.0.0...v1.0.1) (2026-11-27)
+
+### Bug Fixes
+
+* added license ([06e9e3c](https://github.com/setorus/ansible-lens/commit/06e9e3c03e0011b2a09877b030f5e1e475705552))
+
 ## 1.0.0 (2026-11-27)
 
 ### Features

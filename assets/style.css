@@ -30,6 +30,8 @@ select{min-height:34px;max-width:260px}
 .brand svg{width:34px;height:34px;flex:none}
 .brand h1{font:700 22px/1.05 "Space Grotesk",Inter,sans-serif;margin:0}
 .brand p{margin:2px 0 0;color:var(--ink);opacity:.75;font-size:13px}
+.top-right{display:flex;align-items:center;gap:16px}
+.doclink{color:var(--ink);font-weight:600;font-size:13px;text-underline-offset:3px}
 .engine{display:flex;align-items:center;gap:8px;font-size:13px;white-space:nowrap}
 .engine .dot{width:10px;height:10px;border-radius:50%;background:var(--cond);box-shadow:0 0 0 3px color-mix(in srgb,var(--cond) 25%,transparent)}
 .engine.ok .dot{background:var(--run);box-shadow:0 0 0 3px color-mix(in srgb,var(--run) 25%,transparent)}

@@ -17,11 +17,31 @@ Ansible filters/tests/lookups used in playbooks are re-implemented in `lens/filt
 
 ## Deploy
 
-1. Push this folder to a GitHub repository (branch `main`).
-2. *Settings → Pages → Source: GitHub Actions*. The workflow runs the tests and publishes.
+The site builds with Jekyll and the theme set in `_config.yml` (`jekyll-theme-cayman` by default;
+see [adding a theme](https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/adding-a-theme-to-your-github-pages-site-using-jekyll)).
+The theme styles `docs.md` (guide at `/docs/`) and `404.md`. The checker itself has no front matter,
+so Jekyll copies it unchanged.
 
-Any static host works: it is plain files. Local preview: `python3 -m http.server` and open
-http://localhost:8000 (a web server is required, `file://` will not load the worker).
+Pick one publishing source in *Settings → Pages*:
+
+- **GitHub Actions** (recommended): `.github/workflows/pages.yml` runs the tests, builds with
+  `actions/jekyll-build-pages` (same gems as Pages), checks the analyzer files survived the build,
+  then deploys.
+- **Deploy from a branch**: Pages runs Jekyll itself on `main` / root. The workflow's deploy job
+  then fails; delete it or keep only the `test` job.
+
+Change theme: edit `theme:` in `_config.yml`, or switch to `remote_theme:` (instructions inside).
+
+Local preview with Jekyll: `bundle install && bundle exec jekyll serve` (http://localhost:4000).
+Without Ruby: `python3 -m http.server` works for the checker; the guide page needs Jekyll.
+A web server is required either way: `file://` will not load the worker.
+
+Jekyll pitfalls already handled in `_config.yml`:
+
+- `lens/__init__.py` starts with `_`, which Jekyll drops by default: it is in `include:`.
+- `example/` (playbooks full of `{{ }}`) and `tests/` are excluded; the UI uses `example.json`.
+- Any new page with front matter that shows Jinja2 code must wrap it in `{% raw %}…{% endraw %}`,
+  or Liquid will try to render it.
 
 ## Use
 
@@ -48,7 +68,9 @@ http://localhost:8000 (a web server is required, `file://` will not load the wor
 ## Layout
 
 ```
-index.html, assets/        UI (no build step, no npm)
+index.html, assets/        UI (no build step, no npm; copied as-is by Jekyll)
+_config.yml, Gemfile       Jekyll + theme config, local preview
+docs.md, 404.md            themed pages
 assets/worker.js           loads Pyodide 0.29.5 + jinja2 + pyyaml, runs lens/
 lens/values.py             Runtime / SymUndefined symbolic values, tracing
 lens/templar.py            Jinja2 env (native types, trim_blocks), lazy VarScope, lookups

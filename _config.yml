@@ -1,0 +1,30 @@
+# Jekyll / GitHub Pages config.
+# The checker itself (index.html, assets/, lens/, example.json) has no front matter,
+# so Jekyll copies it byte for byte. Only docs.md and 404.md use the theme.
+
+title: Ansible Lens
+description: Static Ansible playbook checker. Jinja2 evaluation and module arguments, nothing executed.
+
+# Theme. Any supported theme works: https://pages.github.com/themes/
+# e.g. jekyll-theme-cayman, minima, jekyll-theme-slate, jekyll-theme-minimal, jekyll-theme-primer
+theme: jekyll-theme-cayman
+
+# Or a theme from any public GitHub repo: comment out `theme` above, uncomment both blocks.
+# remote_theme: pages-themes/cayman@v0.2.0
+# plugins:
+#   - jekyll-remote-theme
+
+# Jekyll skips files whose name starts with "_". The analyzer is a Python package and
+# cannot load without lens/__init__.py.
+include:
+  - __init__.py
+
+# Setting `exclude` replaces Jekyll's default list on GitHub Pages, so defaults are repeated.
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - node_modules/
+  - tests/
+  - example/        # source of example.json; its .yml/.j2 files are not site content

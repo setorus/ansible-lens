@@ -1,0 +1,8 @@
+http_port: 8080
+artifact_url: "https://artifacts.{{ domain }}/{{ app_name }}"
+domain: example.com
+app_dirs:
+  releases: "0755"
+  shared: "0750"
+run_migrations: "yes"
+somaxconn: 1024

@@ -1,0 +1,77 @@
+---
+- name: Configure web tier
+  hosts: web:&prod
+  gather_facts: true
+  vars_files:
+    - vars/{{ env_name }}.yml
+  vars:
+    app_name: shop
+    app_root: "/srv/{{ app_name }}"
+    listen_port: "{{ http_port | default(80) }}"
+    upstreams: "{{ groups['app'] | map('extract', hostvars, 'ansible_host') | list }}"
+    packages: [nginx, curl, "{{ extra_pkg | default(omit) }}"]
+  pre_tasks:
+    - name: Show who we are
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} in {{ group_names | join(',') }} ({{ env_name }})"
+
+  roles:
+    - common
+    - role: nginx
+      vars:
+        nginx_worker_processes: 4
+
+  tasks:
+    - name: Install packages
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ packages | reject('equalto', omit) | list }}"
+
+    - name: Create app dirs
+      file: path={{ app_root }}/{{ item.key }} state=directory mode={{ item.value }}
+      with_dict: "{{ app_dirs }}"
+
+    - name: Check app health
+      ansible.builtin.uri:
+        url: "http://localhost:{{ listen_port }}/health"
+        status_code: 200
+      register: health
+      ignore_errors: true
+
+    - name: Remember build
+      ansible.builtin.set_fact:
+        build_tag: "{{ app_name }}-{{ release | default('latest') }}"
+        healthy: "{{ health.status == 200 }}"
+
+    - name: Report only if unhealthy
+      ansible.builtin.debug:
+        msg: "Health returned {{ health.status }}"
+      when: not healthy
+
+    - name: Deploy release
+      block:
+        - name: Fetch artifact
+          ansible.builtin.get_url:
+            url: "{{ artifact_url }}/{{ build_tag }}.tar.gz"
+            dest: "/tmp/{{ build_tag }}.tar.gz"
+            timeout: "{{ download_timeout }}"
+        - ansible.builtin.include_tasks: tasks/migrate.yml
+          when: run_migrations | bool
+      rescue:
+        - name: Roll back
+          ansible.builtin.command: /usr/local/bin/rollback {{ app_name }}
+      when: ansible_os_family == "Debian"
+
+    - name: Debian-only tweak
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.conf
+        line: "net.core.somaxconn = {{ somaxconn }}"
+      when:
+        - env_name == 'prod'
+        - ansible_distribution_major_version | int >= 11
+      notify: reload sysctl
+
+  handlers:
+    - name: reload sysctl
+      ansible.builtin.command: sysctl -p

@@ -1,0 +1,17 @@
+# {{ ansible_managed | default('Managed by Ansible') }}
+user {{ nginx_user }};
+worker_processes {{ nginx_worker_processes }};
+
+http {
+    keepalive_timeout {{ nginx_keepalive }};
+    upstream {{ app_name }} {
+{% for u in upstreams %}
+        server {{ u }}:{{ listen_port }};
+{% endfor %}
+    }
+    server {
+        listen {{ listen_port }};
+        server_name {{ nginx_server_name }};
+        root {{ app_root }}/current/public;
+    }
+}

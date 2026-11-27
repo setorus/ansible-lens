@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ansible Lens — static playbook checker</title>
+<meta name="description" content="See how Jinja2 variables resolve and which arguments each Ansible module receives, without running anything.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css?v=1.0.0">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="13" cy="13" r="9" fill="none" stroke="currentColor" stroke-width="3"/><path d="M20 20l8 8" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><path d="M9 16l4-8 4 8" fill="none" stroke="var(--accent-ink)" stroke-width="2.4" stroke-linejoin="round"/></svg>
+    <div>
+      <h1>Ansible Lens</h1>
+      <p>Static check: Jinja2 evaluation and module arguments. Nothing is executed.</p>
+    </div>
+  </div>
+  <div class="engine" id="engine"><span class="dot"></span><span id="engineText">Starting…</span></div>
+</header>
+
+<main class="layout">
+  <section class="pane left" aria-label="Project files">
+    <div class="toolbar">
+      <button id="btnExample" type="button">Example</button>
+      <label class="btn">Open folder<input id="inFolder" type="file" webkitdirectory directory multiple hidden></label>
+      <label class="btn">Open files<input id="inFiles" type="file" multiple hidden></label>
+      <button id="btnNew" type="button">New file</button>
+      <button id="btnShare" type="button" title="Copy a link containing all files">Share link</button>
+    </div>
+    <div class="files-editor">
+      <nav class="files" id="files" aria-label="Files"></nav>
+      <div class="editor">
+        <div class="editor-head">
+          <input id="fileName" class="fname" spellcheck="false" aria-label="File path">
+          <button id="btnDelete" type="button" class="ghost" title="Delete file">Delete</button>
+        </div>
+        <div class="code">
+          <pre class="gutter" id="gutter" aria-hidden="true"></pre>
+          <textarea id="src" spellcheck="false" wrap="off" aria-label="File content"></textarea>
+        </div>
+      </div>
+    </div>
+    <p class="drop-hint">Drop a project folder anywhere on the page. Files stay in your browser.</p>
+  </section>
+
+  <section class="pane right" aria-label="Analysis">
+    <form class="controls" id="controls" onsubmit="return false">
+      <label>Playbook<select id="selEntry"></select></label>
+      <label>Inventory<select id="selInv"></select></label>
+      <label>Host<select id="selHost"></select></label>
+      <button id="btnRun" type="button" class="primary">Analyze</button>
+      <label class="chk"><input type="checkbox" id="chkAuto" checked> live</label>
+    </form>
+    <details class="inputs" open>
+      <summary>Extra vars and mock facts</summary>
+      <div class="inputs-grid">
+        <label>Extra vars <small>(-e, YAML)</small><textarea id="extraVars" spellcheck="false" rows="3" placeholder="release: 1.2.3"></textarea></label>
+        <label>Mock facts <small>(ansible_ prefix optional)</small><textarea id="facts" spellcheck="false" rows="3" placeholder="os_family: Debian"></textarea></label>
+      </div>
+    </details>
+
+    <div class="summary" id="summary"></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="tasks" aria-selected="true">Tasks</button>
+      <button role="tab" data-tab="vars">Variables</button>
+      <button role="tab" data-tab="diag">Diagnostics <span id="diagCount" class="count"></span></button>
+      <button role="tab" data-tab="json">JSON</button>
+    </div>
+    <div class="view" id="view-tasks"></div>
+    <div class="view" id="view-vars" hidden>
+      <input id="varFilter" class="filter" placeholder="Filter variables by name, source or value">
+      <div id="varsBody"></div>
+    </div>
+    <div class="view" id="view-diag" hidden></div>
+    <div class="view" id="view-json" hidden><button type="button" id="btnCopyJson" class="ghost">Copy JSON</button><pre id="jsonOut"></pre></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>Legend:</span>
+  <span class="st st-run">runs</span><span class="st st-conditional">depends on runtime</span>
+  <span class="st st-skipped">skipped</span><span class="st st-error">error</span>
+  <span class="v-rt">⟨runtime⟩</span><span class="v-undef">⟨undefined⟩</span><span class="v-omit">omit</span>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="assets/app.js?v=1.0.0"></script>
+</body>
+</html>

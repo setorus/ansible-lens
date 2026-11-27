@@ -1,0 +1,13 @@
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ common_timezone }}"
+
+- name: Create users
+  ansible.builtin.user:
+    name: "{{ u.name }}"
+    groups: "{{ u.groups | join(',') }}"
+    append: true
+  loop: "{{ common_users }}"
+  loop_control:
+    loop_var: u
+    label: "{{ u.name }}"

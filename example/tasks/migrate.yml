@@ -1,0 +1,5 @@
+- name: Run migrations for {{ app_name }}
+  ansible.builtin.command:
+    cmd: ./manage.py migrate --database {{ db_name }}
+    chdir: "{{ app_root }}/current"
+  run_once: true

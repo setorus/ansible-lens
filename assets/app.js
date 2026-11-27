@@ -1,11 +1,12 @@
 /* Ansible Lens UI. Talks to assets/worker.js, which runs lens/*.py in Pyodide. */
 (() => {
   "use strict";
-  const VERSION = "1.0.0";
+  const VERSION = "1.1.0";
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const TEXT_EXT = /\.(ya?ml|j2|jinja2?|json|ini|cfg|txt|conf|sh|py|toml|md|tpl|template)$/i;
   const STORE = "ansible-lens-state-v1";
+  const UI_STORE = "ansible-lens-ui-v1";
 
   const state = { files: {}, current: null, entry: "", inventory: "", host: "", extra: "", facts: "" };
   let result = null;
@@ -120,6 +121,7 @@
 
   function gotoLine(path, line) {
     if (!state.files[path]) return;
+    if (ui.view === "analysis") setView("both");
     openFile(path);
     const ta = $("src"), lines = ta.value.split("\n");
     const l = Math.max(1, Math.min(line || 1, lines.length));
@@ -483,6 +485,81 @@
     state.host = ex.host || ""; save();
   }
 
+  // ------------------------------------------------------------------ layout
+  // Split between editor and analysis (percent of layout width) and which pane is maximized.
+  const SPLIT_DEFAULT = 41.667, SPLIT_MIN = 20, SPLIT_MAX = 80, PANE_MIN_PX = 320;
+  const ui = { split: SPLIT_DEFAULT, view: "both" };
+  function loadUi() {
+    try {
+      const s = JSON.parse(localStorage.getItem(UI_STORE) || "null");
+      if (s && typeof s.split === "number") ui.split = s.split;
+      if (s && ["both", "code", "analysis"].includes(s.view)) ui.view = s.view;
+    } catch (e) { /* ignore */ }
+  }
+  function saveUi() {
+    try { localStorage.setItem(UI_STORE, JSON.stringify(ui)); } catch (e) { /* storage unavailable */ }
+  }
+  function clampSplit(pct) {
+    const w = document.querySelector(".layout").getBoundingClientRect().width || 1;
+    // Keep each pane at least PANE_MIN_PX wide when the window allows it.
+    const lo = Math.max(SPLIT_MIN, Math.min(50, (PANE_MIN_PX / w) * 100));
+    const hi = Math.min(SPLIT_MAX, Math.max(50, 100 - (PANE_MIN_PX / w) * 100));
+    return Math.round(Math.max(lo, Math.min(hi, pct)) * 1000) / 1000;
+  }
+  function applyLayout() {
+    const lay = document.querySelector(".layout");
+    lay.dataset.view = ui.view;
+    lay.style.setProperty("--split", ui.split + "%");
+    $("splitter").setAttribute("aria-valuenow", String(Math.round(ui.split)));
+    const setBtn = (btn, on, what) => {
+      btn.setAttribute("aria-pressed", String(on));
+      btn.textContent = on ? "⤡ Restore" : "⤢ Expand";
+      btn.title = on ? "Show editor and analysis side by side" : `Give the ${what} the full width`;
+    };
+    setBtn($("btnMaxCode"), ui.view === "code", "editor");
+    setBtn($("btnMaxView"), ui.view === "analysis", "analysis");
+  }
+  function setView(v) {
+    ui.view = ui.view === v ? "both" : v;
+    applyLayout(); saveUi();
+    if (ui.view !== "analysis") updateGutter();
+  }
+  function setSplit(pct) {
+    ui.split = clampSplit(pct);
+    applyLayout();
+  }
+  function bindLayout() {
+    const sp = $("splitter"), lay = document.querySelector(".layout");
+    sp.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      sp.setPointerCapture(e.pointerId);
+      sp.classList.add("drag"); document.body.classList.add("resizing");
+      const rect = lay.getBoundingClientRect();
+      const move = (ev) => setSplit(((ev.clientX - rect.left) / rect.width) * 100);
+      const up = () => {
+        sp.removeEventListener("pointermove", move);
+        sp.removeEventListener("pointerup", up);
+        sp.removeEventListener("pointercancel", up);
+        sp.classList.remove("drag"); document.body.classList.remove("resizing");
+        saveUi();
+      };
+      sp.addEventListener("pointermove", move);
+      sp.addEventListener("pointerup", up);
+      sp.addEventListener("pointercancel", up);
+    });
+    sp.addEventListener("dblclick", () => { setSplit(SPLIT_DEFAULT); saveUi(); });
+    sp.addEventListener("keydown", (e) => {
+      const step = e.shiftKey ? 10 : 2;
+      const next = { ArrowLeft: ui.split - step, ArrowRight: ui.split + step, Home: SPLIT_MIN, End: SPLIT_MAX }[e.key];
+      if (next === undefined) return;
+      e.preventDefault(); setSplit(next); saveUi();
+    });
+    $("btnMaxCode").addEventListener("click", () => setView("code"));
+    $("btnMaxView").addEventListener("click", () => setView("analysis"));
+    window.addEventListener("resize", () => { if (ui.view === "both") setSplit(ui.split); });
+  }
+
   // ------------------------------------------------------------------ events
   function bind() {
     $("files").addEventListener("click", (e) => { const b = e.target.closest("button[data-path]"); if (b) openFile(b.dataset.path); });
@@ -587,6 +664,7 @@
 
   // ------------------------------------------------------------------ boot
   async function boot() {
+    loadUi(); bindLayout(); applyLayout();
     bind();
     startWorker();
     const m = location.hash.match(/^#z=([\w-]+)/);

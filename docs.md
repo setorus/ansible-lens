@@ -29,6 +29,10 @@ For every task you get:
    `os_family: Debian` (the `ansible_` prefix is optional).
 4. Open a task to see its arguments. Click `file:line` to jump to the source.
 
+Drag the bar between the editor and the analysis to resize them. Arrow keys also move the bar when
+it has focus (Shift moves it in larger steps), and a double-click resets it. **Expand** gives one
+side the full width. **Restore** brings the other side back. The browser remembers the layout.
+
 **Share link** packs every file into the part of the URL after `#`. Browsers do not send that part
 to the server.
 

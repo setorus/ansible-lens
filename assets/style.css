@@ -40,9 +40,17 @@ select{min-height:34px;max-width:260px}
 @keyframes pulse{50%{opacity:.3}}
 @media(prefers-reduced-motion:reduce){.engine.busy .dot{animation:none}}
 
-.layout{flex:1;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);min-height:0}
+.layout{--split:41.667%;flex:1;display:grid;grid-template-columns:minmax(0,var(--split)) 5px minmax(0,1fr);min-height:0}
+.layout[data-view=code],.layout[data-view=analysis]{grid-template-columns:minmax(0,1fr)}
+.layout[data-view=code] .right,.layout[data-view=analysis] .left,.layout:not([data-view=both]) .splitter{display:none}
+.splitter{position:relative;background:var(--line);cursor:col-resize;touch-action:none;outline:0}
+.splitter::after{content:"";position:absolute;inset:0 -4px}
+.splitter:hover,.splitter:focus-visible,.splitter.drag{background:var(--accent-ink)}
+body.resizing{cursor:col-resize;user-select:none}
+.pane-size{margin-left:auto}
+.pane-size[aria-pressed=true]{color:var(--ink);border-color:var(--line)}
 .pane{display:flex;flex-direction:column;min-height:0;padding:12px 14px;gap:10px}
-.left{border-right:1px solid var(--line);background:var(--panel)}
+.left{background:var(--panel)}
 .right{overflow:auto}
 .right>*{flex:none}
 .toolbar{display:flex;flex-wrap:wrap;gap:6px}
@@ -151,5 +159,5 @@ pre.out{max-height:360px;overflow:auto;white-space:pre;margin:0}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
 .toast.show{opacity:1}
 
-@media(max-width:1000px){html,body{height:auto}body{display:block}.layout{display:block}.pane{min-height:auto}.left{border-right:0;border-bottom:1px solid var(--line)}.files-editor{height:70vh;min-height:360px}.right{overflow:visible}}
+@media(max-width:1000px){html,body{height:auto}body{display:block}.layout{display:block}.splitter{display:none}.pane{min-height:auto}.left{border-bottom:1px solid var(--line)}.files-editor{height:70vh;min-height:360px}.right{overflow:visible}}
 @media(max-width:600px){.files-editor{grid-template-columns:1fr}.files{max-height:160px}.inputs-grid{grid-template-columns:1fr}.top p{display:none}.node .loc{margin-left:0}}

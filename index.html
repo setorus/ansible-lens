@@ -63,10 +63,11 @@
       <button id="btnMaxView" type="button" class="ghost pane-size" aria-controls="paneRight" aria-pressed="false" title="Give the analysis the full width">⤢ Expand</button>
     </form>
     <details class="inputs" open>
-      <summary>Extra vars and mock facts</summary>
+      <summary>Extra vars, mock facts and environment</summary>
       <div class="inputs-grid">
         <label>Extra vars <small>(-e, YAML)</small><textarea id="extraVars" spellcheck="false" rows="3" placeholder="release: 1.2.3"></textarea></label>
         <label>Mock facts <small>(ansible_ prefix optional)</small><textarea id="facts" spellcheck="false" rows="3" placeholder="os_family: Debian"></textarea></label>
+        <label>Environment <small>(lookup('env'), KEY=value)</small><textarea id="envVars" spellcheck="false" rows="3" placeholder="HOME=/home/deploy"></textarea></label>
       </div>
     </details>
 

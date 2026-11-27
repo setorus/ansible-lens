@@ -27,6 +27,9 @@ For every task you get:
 2. Pick the playbook, the inventory (INI or YAML) and the host.
 3. Put `-e` values in **Extra vars**. Put stand-in facts in **Mock facts**, for example
    `os_family: Debian` (the `ansible_` prefix is optional).
+   Put controller environment variables in **Environment**, one `KEY=value` per line (a `.env`
+   file pastes as is) or as a YAML mapping. `lookup('env', ...)` returns these values. Names you
+   leave out stay `⟨runtime:env:NAME⟩`.
 4. Open a task to see its arguments. Click `file:line` to jump to the source.
 
 Drag the bar between the editor and the analysis to resize them. Arrow keys also move the bar when
@@ -44,7 +47,7 @@ to the server.
 | depends on runtime | the outcome needs a value only known while the play runs |
 | skipped | a condition is false, or a handler is never notified |
 | error | Ansible would fail here: undefined variable, bad loop data, syntax error |
-| `⟨runtime:…⟩` | value derived from a registered result, a gathered fact, `lookup('env')`, `now()` |
+| `⟨runtime:…⟩` | value derived from a registered result, a gathered fact, `lookup('env')` for a name not in **Environment**, `now()` |
 | `⟨undefined:…⟩` | variable used without a definition or default |
 | omit | argument removed by `omit`; the module never receives it |
 

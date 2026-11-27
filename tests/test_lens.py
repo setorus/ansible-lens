@@ -222,6 +222,27 @@ def test_handlers_and_import_playbook():
     assert hs[0]["status"] == "conditional" and hs[1]["status"] == "skipped"
 
 
+def test_env_lookup():
+    pb = {"pb.yml": """
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - debug:
+        msg: "{{ lookup('env', 'APP_HOME') }}/{{ lookup('ansible.builtin.env', 'MISSING') }}"
+    - debug: {msg: "{{ query('env', 'A', 'B') }}"}
+"""}
+    out = run(pb)
+    assert arg(tasks(out)[0], "msg")["trace"]["runtime"] == ["env:APP_HOME", "env:MISSING"]
+    out = run(pb, env="# comment\nexport APP_HOME='/opt/app'\nA=1\nB=\"two words\"\n")
+    m = arg(tasks(out)[0], "msg")
+    assert m["value"].startswith("/opt/app/") and m["trace"]["runtime"] == ["env:MISSING"]
+    assert any(r["name"] == "APP_HOME" and r["source"] == "environment" for r in m["trace"]["refs"])
+    assert arg(tasks(out)[1], "msg")["value"] == ["1", "two words"]
+    out = run(pb, env="APP_HOME: /srv\nA: 5\nB: true\n")
+    assert arg(tasks(out)[1], "msg")["value"] == ["5", "true"]
+    assert arg(tasks(out)[0], "msg")["value"].startswith("/srv/")
+
+
 if __name__ == "__main__":
     fails = 0
     for k, f in list(globals().items()):

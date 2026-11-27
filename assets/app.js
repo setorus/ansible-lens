@@ -8,7 +8,7 @@
   const STORE = "ansible-lens-state-v1";
   const UI_STORE = "ansible-lens-ui-v1";
 
-  const state = { files: {}, current: null, entry: "", inventory: "", host: "", extra: "", facts: "" };
+  const state = { files: {}, current: null, entry: "", inventory: "", host: "", extra: "", facts: "", env: "" };
   let result = null;
   let lastDeleted = null;
 
@@ -39,7 +39,7 @@
   function analyze() {
     if (!engineReady) return;
     const input = { files: state.files, entry: state.entry, inventory: state.inventory || null, host: state.host || null,
-      extra_vars: state.extra, facts: state.facts };
+      extra_vars: state.extra, facts: state.facts, env: state.env };
     pending = ++reqId;
     setEngine("Analyzing…", "busy");
     worker.postMessage({ id: pending, input });
@@ -462,7 +462,7 @@
   }
   async function share() {
     try {
-      const code = await pack({ f: state.files, e: state.entry, i: state.inventory, h: state.host, x: state.extra, m: state.facts });
+      const code = await pack({ f: state.files, e: state.entry, i: state.inventory, h: state.host, x: state.extra, m: state.facts, n: state.env });
       const url = location.href.split("#")[0] + "#z=" + code;
       history.replaceState(null, "", url);
       try { await navigator.clipboard.writeText(url); toast(`Link copied (${Math.round(url.length / 1024)} KB)`); }
@@ -478,8 +478,8 @@
   async function loadExample() {
     const r = await fetch("example.json?v=" + VERSION);
     const ex = await r.json();
-    state.extra = ex.extra_vars || ""; state.facts = ex.facts || "";
-    $("extraVars").value = state.extra; $("facts").value = state.facts;
+    state.extra = ex.extra_vars || ""; state.facts = ex.facts || ""; state.env = ex.env || "";
+    $("extraVars").value = state.extra; $("facts").value = state.facts; $("envVars").value = state.env;
     state.entry = ex.entry; state.inventory = ex.inventory;
     setFiles(ex.files);
     state.host = ex.host || ""; save();
@@ -625,6 +625,7 @@
     $("selHost").addEventListener("change", (e) => { state.host = e.target.value; save(); schedule(0); });
     $("extraVars").addEventListener("input", (e) => { state.extra = e.target.value; save(); auto(); });
     $("facts").addEventListener("input", (e) => { state.facts = e.target.value; save(); auto(); });
+    $("envVars").addEventListener("input", (e) => { state.env = e.target.value; save(); auto(); });
     $("btnRun").addEventListener("click", () => schedule(0));
     $("varFilter").addEventListener("input", renderVars);
     $("btnCopyJson").addEventListener("click", async () => { try { await navigator.clipboard.writeText(JSON.stringify(result, null, 1)); toast("JSON copied"); } catch (e) { toast("Copy blocked by browser"); } });
@@ -671,15 +672,15 @@
     if (m) {
       try {
         const s = await unpack(m[1]);
-        Object.assign(state, { entry: s.e || "", inventory: s.i || "", extra: s.x || "", facts: s.m || "" });
-        $("extraVars").value = state.extra; $("facts").value = state.facts;
+        Object.assign(state, { entry: s.e || "", inventory: s.i || "", extra: s.x || "", facts: s.m || "", env: s.n || "" });
+        $("extraVars").value = state.extra; $("facts").value = state.facts; $("envVars").value = state.env;
         setFiles(s.f || {});
         state.host = s.h || ""; save();
         return;
       } catch (e) { toast("Could not read shared link"); }
     }
     if (load() && Object.keys(state.files).length) {
-      $("extraVars").value = state.extra || ""; $("facts").value = state.facts || "";
+      $("extraVars").value = state.extra || ""; $("facts").value = state.facts || ""; $("envVars").value = state.env || "";
       renderFiles(); openFile(state.current && state.files[state.current] !== undefined ? state.current : state.entry); renderSelects();
       return;
     }

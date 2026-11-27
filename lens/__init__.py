@@ -3,7 +3,7 @@ import json
 
 from .walker import Analyzer
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 
 def analyze(inp):

@@ -28,3 +28,10 @@ exclude:
   - node_modules/
   - tests/
   - example/        # source of example.json; its .yml/.j2 files are not site content
+  # release tooling (semantic-release); dotfiles are skipped by Jekyll already
+  - package.json
+  - package-lock.json
+  - commitlint.config.mjs
+  - scripts/
+  - dist/
+  - CHANGELOG.md    # commit subjects may contain {{ }}, which Liquid would try to render

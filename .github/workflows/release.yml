@@ -1,0 +1,74 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13" # same minor as Pyodide 0.29
+      - run: pip install "jinja2==3.1.6" "pyyaml==6.0.2" pytest
+      - run: pytest -q tests
+
+  commitlint:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Conventional commits in this PR
+        run: npx commitlint --from "${{ github.event.pull_request.base.sha }}" --to "${{ github.event.pull_request.head.sha }}" --verbose
+
+  release:
+    needs: test
+    # skip the run triggered by semantic-release's own version commit
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/main' &&
+      !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # tag, release, version commit
+      issues: write        # comment on released issues
+      pull-requests: write # comment on released PRs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - run: npm audit signatures
+      - name: semantic-release
+        env:
+          # RELEASE_TOKEN: fine-grained PAT (contents: write) allowed to bypass branch
+          # protection on main. Falls back to GITHUB_TOKEN when main is unprotected.
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898283+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898283+github-actions[bot]@users.noreply.github.com
+        run: npx semantic-release

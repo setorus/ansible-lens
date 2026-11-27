@@ -43,6 +43,39 @@ Jekyll pitfalls already handled in `_config.yml`:
 - Any new page with front matter that shows Jinja2 code must wrap it in `{% raw %}…{% endraw %}`,
   or Liquid will try to render it.
 
+## Releases
+
+[semantic-release](https://semantic-release.gitbook.io) runs on every push to `main`
+(`.github/workflows/release.yml`, after the tests). Version comes from
+[Conventional Commits](https://www.conventionalcommits.org):
+
+| Commit | Release |
+|---|---|
+| `fix:`, `perf:`, `refactor(lens):` | patch |
+| `feat:` | minor |
+| `feat!:` or a `BREAKING CHANGE:` footer | major |
+| `ci:`, `docs:`, `chore:`, `test:`, `style:`, `build:` | none |
+
+On release it:
+
+1. writes the version into `assets/app.js` (`VERSION`, which also cache-busts the worker,
+   `lens/*.py` and `example.json`), the `?v=` queries in `index.html` and `lens/__init__.py`
+   (`scripts/set-version.mjs`);
+2. updates `CHANGELOG.md` and commits all of it as `chore(release): X.Y.Z` to `main`;
+   Pages rebuilds from that commit, so the live site shows the new version;
+3. tags `vX.Y.Z` and publishes a GitHub Release with notes and `ansible-lens-X.Y.Z.zip`
+   (deployable static files).
+
+PRs get a `commitlint` check so every commit that lands on `main` is analysable.
+Merge commits and squash merges both work; with squash, the PR title is the commit message.
+
+**Protected `main`:** the default `GITHUB_TOKEN` cannot push the release commit past branch
+protection. Create a fine-grained PAT (this repo, *Contents: read and write*), allow its owner
+to bypass the rule, and store it as the `RELEASE_TOKEN` secret. Without the secret the
+workflow uses `GITHUB_TOKEN`.
+
+Local dry run (Node 26+): `npm ci && GITHUB_TOKEN=… npm run release:dry`.
+
 ## Use
 
 - **Open folder** / drag-and-drop a project, or edit files in place. Nothing leaves the browser.
@@ -71,6 +104,7 @@ Jekyll pitfalls already handled in `_config.yml`:
 index.html, assets/        UI (no build step, no npm; copied as-is by Jekyll)
 _config.yml, Gemfile       Jekyll + theme config, local preview
 docs.md, 404.md            themed pages
+package.json, .releaserc.json, commitlint.config.mjs, scripts/set-version.mjs   release tooling
 assets/worker.js           loads Pyodide 0.29.5 + jinja2 + pyyaml, runs lens/
 lens/values.py             Runtime / SymUndefined symbolic values, tracing
 lens/templar.py            Jinja2 env (native types, trim_blocks), lazy VarScope, lookups

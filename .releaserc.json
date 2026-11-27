@@ -1,0 +1,25 @@
+{
+  "branches": ["main"],
+  "tagFormat": "v${version}",
+  "plugins": [
+    ["@semantic-release/commit-analyzer", {
+      "preset": "conventionalcommits",
+      "releaseRules": [
+        { "type": "perf", "release": "patch" },
+        { "type": "refactor", "scope": "lens", "release": "patch" }
+      ]
+    }],
+    ["@semantic-release/release-notes-generator", { "preset": "conventionalcommits" }],
+    ["@semantic-release/changelog", { "changelogFile": "CHANGELOG.md", "changelogTitle": "# Changelog" }],
+    ["@semantic-release/exec", {
+      "prepareCmd": "node scripts/set-version.mjs ${nextRelease.version} && mkdir -p dist && git ls-files -co --exclude-standard -- . ':!:dist' ':!:.github' ':!:package*.json' ':!:.releaserc.json' ':!:commitlint.config.mjs' ':!:scripts' | zip -q dist/ansible-lens-${nextRelease.version}.zip -@"
+    }],
+    ["@semantic-release/git", {
+      "assets": ["CHANGELOG.md", "index.html", "assets/app.js", "lens/__init__.py"],
+      "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}"
+    }],
+    ["@semantic-release/github", {
+      "assets": [{ "path": "dist/ansible-lens-*.zip", "label": "Site bundle (static files, deploy anywhere)" }]
+    }]
+  ]
+}

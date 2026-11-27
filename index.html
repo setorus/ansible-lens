@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=1.0.0">
+<link rel="stylesheet" href="assets/style.css?v=1.1.0">
 </head>
 <body>
 <header class="top">
@@ -26,13 +26,14 @@
 </header>
 
 <main class="layout">
-  <section class="pane left" aria-label="Project files">
+  <section class="pane left" id="paneLeft" aria-label="Project files">
     <div class="toolbar">
       <button id="btnExample" type="button">Example</button>
       <label class="btn">Open folder<input id="inFolder" type="file" webkitdirectory directory multiple hidden></label>
       <label class="btn">Open files<input id="inFiles" type="file" multiple hidden></label>
       <button id="btnNew" type="button">New file</button>
       <button id="btnShare" type="button" title="Copy a link containing all files">Share link</button>
+      <button id="btnMaxCode" type="button" class="ghost pane-size" aria-controls="paneLeft" aria-pressed="false" title="Give the editor the full width">⤢ Expand</button>
     </div>
     <div class="files-editor">
       <nav class="files" id="files" aria-label="Files"></nav>
@@ -50,13 +51,16 @@
     <p class="drop-hint">Drop a project folder anywhere on the page. Files stay in your browser.</p>
   </section>
 
-  <section class="pane right" aria-label="Analysis">
+  <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" aria-controls="paneLeft" aria-label="Resize editor and analysis" aria-valuemin="20" aria-valuemax="80" aria-valuenow="42" tabindex="0" title="Drag to resize. Double-click to reset."></div>
+
+  <section class="pane right" id="paneRight" aria-label="Analysis">
     <form class="controls" id="controls" onsubmit="return false">
       <label>Playbook<select id="selEntry"></select></label>
       <label>Inventory<select id="selInv"></select></label>
       <label>Host<select id="selHost"></select></label>
       <button id="btnRun" type="button" class="primary">Analyze</button>
       <label class="chk"><input type="checkbox" id="chkAuto" checked> live</label>
+      <button id="btnMaxView" type="button" class="ghost pane-size" aria-controls="paneRight" aria-pressed="false" title="Give the analysis the full width">⤢ Expand</button>
     </form>
     <details class="inputs" open>
       <summary>Extra vars and mock facts</summary>
@@ -91,6 +95,6 @@
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="assets/app.js?v=1.0.0"></script>
+<script src="assets/app.js?v=1.1.0"></script>
 </body>
 </html>

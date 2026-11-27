@@ -236,7 +236,19 @@ class Templar:
         if name in ("file", "template", "first_found", "fileglob"):
             return an.file_lookup(name, flat, kw, scope)
         if name == "env":
-            return Runtime(f"env:{','.join(map(str, flat))}") if len(flat) <= 1 else [Runtime(f"env:{x}") for x in flat]
+            # Known only for names the user listed in Environment; the rest stay runtime values.
+            env, t, out = getattr(an, "env_vars", {}), current(), []
+            for x in flat:
+                x = str(x)
+                if x in env:
+                    if t is not None:
+                        t.add_ref(x, "environment", env[x])["value"] = env[x]
+                    out.append(env[x])
+                else:
+                    out.append(Runtime(f"env:{x}"))
+            if not flat:
+                return Runtime("env:")
+            return out[0] if len(out) == 1 else out
         return Runtime(f"lookup('{name}', {', '.join(map(repr, flat))})")
 
 

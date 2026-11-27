@@ -233,6 +233,7 @@ class Analyzer:
         self.tp = Templar(self)
         self.extra = self._parse_vars(inp.get("extra_vars"), "extra vars")
         self.mock_facts = self._parse_vars(inp.get("facts"), "mock facts")
+        self.env_vars = self._parse_env(inp.get("env"))
         inv_text = self.vfs.read(self.inv_path) if self.inv_path and self.vfs.exists(self.inv_path) else None
         if self.inv_path and inv_text is None:
             self.warn(f"inventory file not found: {self.inv_path}")
@@ -280,6 +281,29 @@ class Analyzer:
             self.error(f"{label}: expected a mapping")
             return {}
         return data
+
+    def _parse_env(self, text):
+        """Controller environment for lookup('env'): dotenv lines (KEY=value) or a YAML mapping."""
+        if not text or not str(text).strip():
+            return {}
+        lines = [ln.strip() for ln in str(text).splitlines()]
+        lines = [ln for ln in lines if ln and not ln.startswith("#")]
+        env = {}
+        if all(re.match(r"(export\s+)?[A-Za-z_][A-Za-z0-9_]*=", ln) for ln in lines):
+            for ln in lines:
+                k, v = re.sub(r"^export\s+", "", ln).split("=", 1)
+                v = v.strip()
+                if len(v) >= 2 and v[0] == v[-1] and v[0] in "'\"":
+                    v = v[1:-1]
+                env[k.strip()] = v
+            return env
+        data = self._parse_vars(text, "environment")
+        for k, v in data.items():
+            if isinstance(v, (dict, list)):
+                self.error(f"environment: {k} must be a string, not a {type(v).__name__}")
+                continue
+            env[str(k)] = "" if v is None else str(v).lower() if isinstance(v, bool) else str(v)
+        return env
 
     def load_file(self, path):
         try:

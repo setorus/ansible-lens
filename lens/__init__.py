@@ -7,7 +7,7 @@ __version__ = "1.0.0"
 
 
 def analyze(inp):
-    """inp: {files: {path: text}, entry, inventory, host, extra_vars, facts}"""
+    """inp: {files: {path: text}, entry, inventory, host, extra_vars, facts, env}"""
     return Analyzer(inp).run()
 
 
